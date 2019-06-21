@@ -9,6 +9,7 @@ app.use(bodyParse.json())
 app.use(bodyParse.urlencoded({ extended: true }))
 app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*")
+    res.setHeader("Access-Control-Allow-Methods","GET,POST,PUT,DELETE")
     res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
     res.setHeader("Content-Type", "application/json");
     next();
@@ -28,14 +29,27 @@ app.get('/api/users', (req, res) => {
     })
 })
 
-app.get('/api/users/:userId', (req, res) => {
-    let conn = mod.getConnection()
-    let userId = req.params.userId
-    conn.query(`SELECT * FROM user WHERE user.user_id = ${userId}`, (error, results, fields) => {
-        if (error) throw error
-        res.send(results)
-    })
-    conn.end()
+app.get('/api/users/:userId', (req, res) => {    
+    let id = req.params.userId
+    let response = {}    
+    if(id !== null && id !== undefined){
+        mod.getUserById(id, (data) => {
+            if(Object.entries(data).length > 0){
+                res.json(data)
+                res.status(200)
+            }else{
+                response.status = 404
+                response.message = 'Usuário não encontrado ou não existe.'
+                res.json(response)
+                res.status(404)
+            }
+        })
+    }else{
+        response.status = 404
+        response.message = 'Usuário não encontrado ou não existe.'
+        res.json(JSON.stringify(response))
+        res.status(404)
+    }
 })
 
 app.post('/api/users', (req, res) => {
@@ -57,24 +71,33 @@ app.post('/api/users', (req, res) => {
     }
 })
 
-app.put('/api/user/:userId', (req, res) => {
-    let { name, lastname, age } = req.body
-    if (userId === null || userId === undefined) {
+app.put('/api/users', (req, res) => {    
+    let user = req.body
+    if (Object.entries(user).length == 0) {
         // TODO tratar retorno de erro
     } else {
-        let conn = mod.getConnection();
-        conn.query(`
-            UPDATE  \`my-db\`.\`user\` SET
-            user.user_name = ?,
-            user_user_lastname = ?,
-            user_user_age = ?
-            WHERE user.user_id = ?
-        `, [name, lastname, age, userId], function (error, results, fields) {
-
-            });
-        conn.end()
+        mod.updateUser(user, (response) => {
+            res.json(JSON.stringify(response))
+            res.status(200)
+        })
     }
+})
 
+app.delete('/api/users/:id', (req, res) => {
+    let id = req.params.id
+    if(id > 0){
+        mod.deleteUser(id, (response) => {
+            res.json(JSON.stringify(response))
+            res.status(200)
+        })
+    }else{
+        let response = {
+            status: 404,
+            message: 'Usuário não existe ou não foi encontrado'
+        }
+        res.json(JSON.stringify(response))
+        res.status(404)
+    }
 })
 
 app.listen(port, () => console.log(`Server running on port ${port}`))
