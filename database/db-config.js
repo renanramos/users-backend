@@ -3,7 +3,7 @@ const _config = {
     user: 'root',
     port: 3306,
     password: '123@mudar',
-    database: 'my-db'
+    database: 'my-db',
 }
 
 module.exports = {

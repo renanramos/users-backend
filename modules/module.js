@@ -1,5 +1,6 @@
-const mysql = require('mysql')
-const db = require('./../database/db-config')
+const mysql = require('mysql');
+const db = require('./../database/db-config');
+const sql = require('./../constants/db.constants');
 
 const _getConnection = () => {
     return mysql.createConnection(db.config);
@@ -7,7 +8,7 @@ const _getConnection = () => {
 
 const _getAllUsers = (callback) => {
     let conn = _getConnection();
-    conn.query('SELECT * FROM user', (error, results, fields) => {
+    conn.query(sql.getAllUsers, (error, results, fields) => {
         callback(results);
     })
     conn.end()
@@ -15,7 +16,7 @@ const _getAllUsers = (callback) => {
 
 const _getUserByID = (userId, callback) => {
     let conn = _getConnection();
-    conn.query('SELECT * FROM user WHERE user.user_id = ?', [userId], (error, results, fields) => {
+    conn.query(sql.getUserById, [userId], (error, results, fields) => {
         callback(results);
     })
     conn.end()
@@ -23,10 +24,7 @@ const _getUserByID = (userId, callback) => {
 
 const _createNewUser = (user, callback) => {
     let conn = _getConnection();
-    conn.query(`INSERT INTO \`my-db\`.\`user\` SET
-            user.user_name = ?,
-            user.user_lastname = ?,
-            user.user_age = ? `, [user.name, user.lastname, user.age],
+    conn.query(sql.createUser, [user.name, user.lastname, user.age],
         (error, results, fields) => {
             if (error) throw callback(error);
             let response = {
@@ -42,12 +40,7 @@ const _updateUser = (user, callback) => {
     if(Object.entries(user).length > 0){
         let conn = _getConnection();
         let response = {}
-        conn.query(`
-            UPDATE  \`my-db\`.\`user\` SET
-            user.user_name = ?,
-            user.user_lastname = ?,
-            user.user_age = ?
-            WHERE user.user_id = ?`,
+        conn.query(sql.updateUser,
             [user.name, user.lastname, user.age, user.id],
             (error, results, fields) => {
                 if(results.affectedRows == 1){
@@ -70,7 +63,7 @@ const _updateUser = (user, callback) => {
 const _deleteUser = (id, callback) =>{
     let conn = _getConnection();
     let response = {}
-    conn.query(`DELETE FROM \`my-db\`.\`user\` WHERE user.user_id = ?`, id, (error, results, fields) => {
+    conn.query(sql.deleteUser, id, (error, results, fields) => {
         if(error)throw error;
         if(results.affectedRows == 1){
             response = {
